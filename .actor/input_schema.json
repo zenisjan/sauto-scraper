@@ -1,0 +1,74 @@
+{
+    "title": "Sauto.cz Scraper",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "categories": {
+            "title": "Categories to scrape",
+            "type": "array",
+            "description": "List of Sauto.cz vehicle categories to scrape. Leave empty to scrape all categories.",
+            "editor": "select",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "osobni",
+                    "uzitkova",
+                    "nakladni",
+                    "motorky",
+                    "ctyrkolky",
+                    "privesy-navesy",
+                    "obytne",
+                    "pracovni-stroje",
+                    "autobusy"
+                ],
+                "enumTitles": [
+                    "Osobni (Personal cars)",
+                    "Uzitkova (Utility vehicles)",
+                    "Nakladni (Trucks)",
+                    "Motorky (Motorcycles)",
+                    "Ctyrkolky (ATVs)",
+                    "Privesy a navesy (Trailers)",
+                    "Obytne (RVs/Campers)",
+                    "Pracovni stroje (Work machines)",
+                    "Autobusy (Buses)"
+                ]
+            }
+        },
+        "maxListings": {
+            "title": "Maximum listings per category",
+            "type": "integer",
+            "description": "Maximum number of listings to scrape per category (0 = unlimited)",
+            "minimum": 0
+        },
+        "includeDetailedData": {
+            "title": "Include detailed data",
+            "type": "boolean",
+            "description": "Whether to scrape detailed information from individual listing API (full description, phone, equipment, VIN)"
+        },
+        "searchQuery": {
+            "title": "Search query",
+            "type": "string",
+            "description": "Optional search term to filter listings (e.g. 'Skoda Octavia')",
+            "editor": "textfield"
+        },
+        "location": {
+            "title": "Location filter (region SEO name)",
+            "type": "string",
+            "description": "Optional region SEO name to filter listings (e.g. 'jihomoravsky-kraj', 'praha')",
+            "editor": "textfield"
+        },
+        "priceMin": {
+            "title": "Minimum price (CZK)",
+            "type": "integer",
+            "description": "Minimum price filter in Czech Koruna",
+            "minimum": 0
+        },
+        "priceMax": {
+            "title": "Maximum price (CZK)",
+            "type": "integer",
+            "description": "Maximum price filter in Czech Koruna",
+            "minimum": 0
+        }
+    },
+    "required": []
+}

@@ -1,0 +1,13 @@
+{
+    "actorSpecification": 1,
+    "name": "sauto-scraper",
+    "title": "Sauto.cz Scraper",
+    "description": "Scraper for sauto.cz car marketplace (Seznam.cz). Scrapes vehicle listings from multiple categories with detailed information including images, seller info, location data, and vehicle specifications.",
+    "version": "1.0",
+    "buildTag": "latest",
+    "meta": {
+        "templateId": "python-start"
+    },
+    "input": "./input_schema.json",
+    "dockerfile": "../Dockerfile"
+}
