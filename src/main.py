@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, timezone
 
 from apify import Actor
-from httpx import AsyncClient, HTTPStatusError
+from httpx import AsyncClient, HTTPStatusError, TransportError
 
 # Import our database manager and geocoding - handle different import paths
 try:
@@ -84,6 +84,46 @@ def _run_deadline() -> Optional[datetime]:
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class ConsentWallError(RuntimeError):
+    """Seznam's CMP consent wall intercepted a request.
+
+    The hardcoded consent cookies have rotated, so EVERY request will fail the
+    same way — fail the whole run loudly (sold-detection then ignores the run)
+    instead of quietly completing with zero listings.
+    """
+
+
+# Bounded exponential backoff for transient fetch failures (timeouts, resets,
+# 429/5xx). A single flaky response used to abort an entire category scrape.
+_RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+
+
+async def _request_with_retry(client, method, url, attempts=3, **kwargs):
+    """Issue a request, retrying transient failures with exponential backoff.
+
+    Returns the final response without raising for status (callers keep their
+    own raise_for_status()); re-raises the last transport error if the
+    connection itself keeps failing.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            response = await client.request(method, url, **kwargs)
+        except TransportError as e:
+            if attempt == attempts:
+                raise
+            reason = repr(e)
+        else:
+            if response.status_code not in _RETRYABLE_STATUS or attempt == attempts:
+                return response
+            reason = f"HTTP {response.status_code}"
+        delay = 2.0 * (2 ** (attempt - 1))
+        Actor.log.warning(
+            f"Transient fetch failure ({reason}); retry {attempt}/{attempts - 1} "
+            f"in {delay:.0f}s: {url}"
+        )
+        await asyncio.sleep(delay)
 
 
 class _FailRunOnCrash:
@@ -176,18 +216,22 @@ class SautoScraper:
         """Fetch a JSON response from the Sauto API."""
         url = f"{API_BASE}/{endpoint}"
         try:
-            response = await self.client.get(url, params=params, follow_redirects=True)
+            response = await _request_with_retry(self.client, "GET", url, params=params, follow_redirects=True)
             response.raise_for_status()
 
             # Check for redirect to consent page
             final_url = str(response.url)
             if "cmp.seznam.cz" in final_url:
-                Actor.log.warning(f"API redirected to CMP consent page: {final_url}")
-                return None
+                raise ConsentWallError(
+                    f"CMP consent wall intercepted the API call ({final_url}) — "
+                    f"consent cookies rotated; update _set_consent_cookies()"
+                )
 
             data = response.json()
             return data
 
+        except ConsentWallError:
+            raise
         except HTTPStatusError as e:
             Actor.log.error(f"HTTP error fetching {url}: {e}")
             return None
