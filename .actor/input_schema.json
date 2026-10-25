@@ -37,8 +37,9 @@
         "maxListings": {
             "title": "Maximum listings per category",
             "type": "integer",
-            "description": "Maximum number of listings to scrape per category (0 = unlimited)",
-            "minimum": 0
+            "description": "Maximum number of listings to scrape per category. 0 or empty = unlimited: every listing (categories over the API's 10,000-result window are split into price bands). A cap takes the newest listings.",
+            "minimum": 0,
+            "default": 0
         },
         "includeDetailedData": {
             "title": "Include detailed data",
@@ -52,9 +53,9 @@
             "editor": "textfield"
         },
         "location": {
-            "title": "Location filter (region SEO name)",
+            "title": "Location filter (region or district)",
             "type": "string",
-            "description": "Optional region SEO name to filter listings (e.g. 'jihomoravsky-kraj', 'praha')",
+            "description": "Optional region or district (kraj / okres), as SEO or Czech name: e.g. 'jihomoravsky-kraj', 'Jihomoravský kraj', 'praha', 'brno-mesto', 'Brno-venkov'. A value that is neither fails the run instead of scraping all of Czechia.",
             "editor": "textfield"
         },
         "priceMin": {
